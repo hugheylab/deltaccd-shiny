@@ -1,7 +1,7 @@
 library('shiny')
 
 fluidPage(
-	titlePanel('Circadian Clock Correlation Distance'),
+	titlePanel('Quantifying circadian clock function using clock gene co-expression'),
 	fluidRow(
 		column(3,
 				 wellPanel(
