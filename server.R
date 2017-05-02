@@ -2,6 +2,10 @@ library('shiny')
 library('foreach')
 source('helpers.R')
 
+refFilePathHuman = 'reference_human.csv'
+refFilePathMouse = 'reference_mouse.csv'
+testFileNameExample = 'GSE32863.csv'
+
 # reference correlations
 	# correlation matrix, order of gene symbols based on first column
 
@@ -12,9 +16,9 @@ source('helpers.R')
 function(input, output) {
 	refSquare = reactive({
 		if (input$refOption=='human') {
-			refFilePath = 'reference_human.csv'
+			refFilePath = refFilePathHuman
 		} else if (input$refOption=='mouse') {
-			refFilePath = 'reference_mouse.csv'
+			refFilePath = refFilePathMouse
 		} else if (input$refOption=='custom' && !is.null(input$refFile)) {
 			refFilePath = input$refFile$datapath
 		} else {
@@ -22,12 +26,6 @@ function(input, output) {
 		refTmp = read_csv(refFilePath)
 		colnames(refTmp)[1] = 'symbol1'
 		return(refTmp)
-	})
-
-	output$refDownloadInput = renderUI({
-		if (is.null(refSquare())) {
-			return(NULL)}
-		downloadButton('refDownload', 'Download reference correlations')
 	})
 
 	output$refDownload = downloadHandler('reference_corr.csv', function(file) write_csv(refSquare(), file))
@@ -46,7 +44,7 @@ function(input, output) {
 			filter(symbol1!=symbol2)
 	})
 
-	refHeatmap = reactive({
+	output$refHeatmap = renderPlot({
 		if (is.null(ref())) {
 			return(NULL)}
 		ref1 = makeSymbolFac(ref(), symbolLevels(), reve=TRUE)
@@ -59,13 +57,11 @@ function(input, output) {
 		plotOutput('refHeatmap', width=input$refPlotWidth, height=input$refPlotHeight)
 	})
 
-	output$refHeatmap = renderPlot({
-		refHeatmap()
-	})
+	#######################################################################
 
 	testFilePath = reactive({
 		if (input$testOption=='example') {
-			'GSE19188.csv'
+			testFileNameExample
 		} else if (!is.null(input$testFile)) {
 			input$testFile$datapath
 		} else {
@@ -74,7 +70,7 @@ function(input, output) {
 
 	testFileName = reactive({
 		if (input$testOption=='example') {
-			'GSE19188.csv'
+			testFileNameExample
 		} else if (!is.null(input$testFile)) {
 			input$testFile$name
 		} else {
@@ -87,6 +83,8 @@ function(input, output) {
 		read_csv(testFilePath())
 	})
 
+	output$testDownload = downloadHandler(testFileName(), function(file) write_csv(tst(), file))
+
 	testCorr = reactive({
 		if (is.null(tst()) || is.null(ref())) {
 			return(NULL)}
@@ -95,22 +93,22 @@ function(input, output) {
 			do(calcCorr(., symbolLevels()))
 	})
 
-	output$testCorrDownloadInput = renderUI({
-		if (is.null(testCorr())) {
-			return(NULL)}
-		downloadButton('testCorrDownload', 'Download correlations for test data')
-	})
-
 	output$testCorrDownload = downloadHandler(
 		function() sprintf('%s_corr.csv', tools::file_path_sans_ext(testFileName())),
 		function(file) write_csv(testCorr(), file)
 	)
 
-	testHeatmap = reactive({
+	output$testCorrDownloadInput = renderUI({
+		if (is.null(testCorr())) {
+			return(NULL)}
+		downloadButton('testCorrDownload', 'Download test data correlations')
+	})
+
+	output$testHeatmap = renderPlot({
 		if (is.null(testCorr())) {
 			return(NULL)}
 		testCorr1 = makeSymbolFac(testCorr(), symbolLevels(), reve=TRUE)
-		makeHeatmap(ggplot(testCorr1) + facet_wrap(~condition, ncol=2), gc=getLowHigh(testCorr1$rho),
+		makeHeatmap(ggplot(testCorr1) + facet_wrap(~condition, ncol=3), gc=getLowHigh(testCorr1$rho),
 						text=element_text(size=13), axis.text.x=element_text(angle=90, vjust=0.5, hjust=1)) +
 			ggtitle(tools::file_path_sans_ext(testFileName()))
 	})
@@ -119,10 +117,6 @@ function(input, output) {
 		if (is.null(testCorr())) {
 			return(NULL)}
 		plotOutput('testHeatmap', width=input$testPlotWidth, height=input$testPlotHeight)
-	})
-
-	output$testHeatmap = renderPlot({
-		testHeatmap()
 	})
 
 	output$testConditionInput = renderUI({
@@ -171,14 +165,14 @@ function(input, output) {
 		testResultSig()
 	})
 
-	output$testResultDownloadInput = renderUI({
-		if (is.null(testResultSig())) {
-			return(NULL)}
-		downloadButton('testResultDownload', 'Download results for test data')
-	})
-
 	output$testResultDownload = downloadHandler(
 		function() sprintf('%s_result.csv', tools::file_path_sans_ext(testFileName())),
 		function(file) write_csv(testResultSig(), file)
 	)
+
+	output$testResultDownloadInput = renderUI({
+		if (is.null(testResultSig())) {
+			return(NULL)}
+		downloadButton('testResultDownload', 'Download results table')
+	})
 }

@@ -1,6 +1,7 @@
 library('tidyverse')
 
-set.seed(330033)
+# set.seed(330033)
+set.seed(100)
 eb = element_blank()
 theme_set(theme_light() +
 			 	theme(axis.text=element_text(color='black'), strip.text=element_text(color='black'),
