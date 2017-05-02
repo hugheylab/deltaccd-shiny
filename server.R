@@ -25,7 +25,7 @@ function(input, output) {
 			refFilePath = input$refFile$datapath
 		} else {
 			return(NULL)}
-		refTmp = read_csv(refFilePath)
+		refTmp = read_csv(refFilePath, col_types=cols())
 		colnames(refTmp)[1] = 'symbol1'
 		return(refTmp)
 	})
@@ -89,26 +89,44 @@ function(input, output) {
 	tst = reactive({
 		if (is.null(testFilePath())) {
 			return(NULL)}
-		read_csv(testFilePath())
+		read_csv(testFilePath(), col_types=cols())
 	})
 
 	testFail = reactive({
-		length(setdiff(symbolLevels(), setdiff(colnames(tst()), c('sample', 'condition'))))>0
+		x = rep(NA, 4)
+		x[1] = length(setdiff(symbolLevels(), setdiff(colnames(tst()), c('sample', 'condition')))) > 0
+		x[2] = !('condition' %in% colnames(tst()))
+		if (!x[2]) {
+			df = count(tst(), condition)
+			x[3] = nrow(df) < 2
+			x[4] = any(df$n < 2)
+		} else {
+			x[3:4] = FALSE}
+		x
 	})
 
 	output$testFailText = renderText({
-		if (is.null(tst()) || !testFail()) {
+		if (is.null(tst()) || all(!testFail())) {
 			return(NULL)}
-		missingSymbols = setdiff(symbolLevels(), setdiff(colnames(tst()), c('sample', 'condition')))
-		errStr = c('Cannot proceed with analysis, because the following genes are in the reference panel,',
-					  'but not in the test data: %s. Please revise the reference correlations or the test data.')
-		sprintf(paste(errStr, collapse=' '), paste(missingSymbols, collapse=', '))
+		errVec = 'Cannot proceed with analysis.'
+		if (testFail()[1]) {
+			missingSymbols = setdiff(symbolLevels(), setdiff(colnames(tst()), c('sample', 'condition')))
+			errStr = c('The test data must contain every gene in the reference panel,',
+						  'but is currently missing the following gene(s): %s.')
+			errVec = c(errVec, sprintf(paste(errStr, collapse=' '), paste(missingSymbols, collapse=', ')))}
+		if (testFail()[2]) {
+			errVec = c(errVec, "The test data must have a column named 'condition'.")}
+		if (testFail()[3]) {
+			errVec = c(errVec, 'The test data must include samples from at least two conditions.')}
+		if (testFail()[4]) {
+			errVec = c(errVec, 'The test data must have at least two samples for each condition.')}
+		paste(errVec, collapse=' ')
 	})
 
 	output$testDownload = downloadHandler(testFileName(), function(file) write_csv(tst(), file))
 
 	testCorr = reactive({
-		if (is.null(ref()) || is.null(tst()) || testFail()) {
+		if (is.null(ref()) || is.null(tst()) || any(testFail())) {
 			return(NULL)}
 		tst() %>%
 			group_by(condition) %>%
