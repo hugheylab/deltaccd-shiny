@@ -5,6 +5,8 @@ source('helpers.R')
 refFilePathHuman = 'reference_human.csv'
 refFilePathMouse = 'reference_mouse.csv'
 testFileNameExample = 'GSE32863.csv'
+nIter = 1000
+seed = 100
 
 # reference correlations
 	# correlation matrix, order of gene symbols based on first column
@@ -55,6 +57,13 @@ function(input, output) {
 
 	output$refHeatmapUi = renderUI({
 		plotOutput('refHeatmap', width=input$refPlotWidth, height=input$refPlotHeight)
+	})
+
+	output$refPlotSliders = renderUI({
+		if (is.null(ref())) {
+			return(NULL)}
+		list(sliderInput('refPlotWidth', 'Plot width (px)', min=200, max=400, value=280, step=20),
+			  sliderInput('refPlotHeight', 'Plot height (px)', min=200, max=400, value=240, step=20))
 	})
 
 	#######################################################################
@@ -143,6 +152,13 @@ function(input, output) {
 		checkboxInput('testSig', 'Calculate p-value (takes several seconds)')
 	})
 
+	output$testPlotSliders = renderUI({
+		if (is.null(testCorr())) {
+			return(NULL)}
+		list(sliderInput('testPlotWidth', 'Plot width (px)', min=400, max=600, value=460, step=20),
+			  sliderInput('testPlotHeight', 'Plot height (px)', min=200, max=600, value=260, step=20))
+	})
+
 	testResult = reactive({
 		if (is.null(input$testCondition)) {
 			return(NULL)}
@@ -157,13 +173,12 @@ function(input, output) {
 
 		testNormal = filter(tst(), condition==input$testCondition)
 		conditions = setdiff(tst()$condition, input$testCondition)
-		nIter = 1000
 
 		testPerm = foreach(conditionNow=conditions, .combine=bind_rows) %do% {
 			testNow = tst() %>%
 				filter(condition==conditionNow) %>%
 				bind_rows(testNormal) %>%
-				makePerms(nIter) %>%
+				makePerms(nIter, seed) %>%
 				group_by(condition, add=TRUE) %>%
 				do(calcCorr(., symbolLevels())) %>%
 				calcRefDist(ref(), symbolLevels(), input$testCondition) %>%
@@ -176,7 +191,7 @@ function(input, output) {
 		if (is.null(testResultSig())) {
 			return(NULL)}
 		testResultSig()
-	})
+	}, digits=3)
 
 	output$testResultDownload = downloadHandler(
 		function() sprintf('%s_result.csv', tools::file_path_sans_ext(testFileName())),

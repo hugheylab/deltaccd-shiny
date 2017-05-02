@@ -20,10 +20,7 @@ fluidPage(
 				 		fileInput('refFile', 'CSV file:',
 				 					 accept=c('text/csv', 'text/comma-separated-values,text/plain', '.csv'))
 				 	),
-
-				 	sliderInput('refPlotWidth', 'Plot width (px)', min=200, max=400, value=280, step=20),
-				 	sliderInput('refPlotHeight', 'Plot height (px)', min=200, max=400, value=240, step=20)
-
+				 	uiOutput('refPlotSliders')
 				 ),
 				 wellPanel(
 				 	p('For details of the method and our results, please check out the ',
@@ -52,8 +49,7 @@ fluidPage(
 				 	uiOutput('testConditionUi'),
 				 	uiOutput('testSigUi'),
 				 	uiOutput('testResultDownloadUi'),
-				 	sliderInput('testPlotWidth', 'Plot width (px)', min=400, max=600, value=440, step=20),
-				 	sliderInput('testPlotHeight', 'Plot height (px)', min=200, max=600, value=260, step=20)
+				 	uiOutput('testPlotSliders')
 				 )
 		),
 		column(6,

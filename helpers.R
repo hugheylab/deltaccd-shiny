@@ -1,7 +1,5 @@
 library('tidyverse')
 
-set.seed(100)
-eb = element_blank()
 theme_set(theme_light() +
 			 	theme(axis.text=element_text(color='black'), strip.text=element_text(color='black'),
 			 			panel.grid.minor=element_blank(), legend.margin=margin(t=0, r=0, b=0, l=0, unit='cm')))
@@ -57,7 +55,9 @@ calcRefDist = function(df, ref, symbolLevels, conditionNormal) {
 		arrange(condition)}
 
 
-makePerms = function(df, nIter) {
+makePerms = function(df, nIter, seed) {
+	if (!is.na(seed)) {
+		set.seed(seed)}
 	df %>%
 		mutate(dummy = 1) %>%
 		full_join(tibble(idx = 1:nIter, dummy = 1), by='dummy') %>%
