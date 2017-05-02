@@ -1,4 +1,5 @@
 library('shiny')
+library('markdown')
 
 fluidPage(
 	titlePanel('Quantifying circadian clock function using clock gene co-expression'),
