@@ -1,7 +1,7 @@
 library('shiny')
 
 fluidPage(
-	titlePanel('Clock Correlation Distance'),
+	titlePanel('Circadian Clock Correlation Distance'),
 	fluidRow(
 		column(3,
 				 wellPanel(
@@ -10,14 +10,10 @@ fluidPage(
 				 					 c('Default for human'='human',
 				 					   'Default for mouse'='mouse',
 				 					   'Supply my own'='custom')),
-
 				 	conditionalPanel(
 				 		condition = "input.refOption != 'custom'",
-				 		downloadButton('refDownload', 'Download reference correlations')
-				 	),
-				 	conditionalPanel(
-				 		condition = "input.refOption != 'custom'",
-				 		br()
+				 		downloadButton('refDownload', 'Download reference correlations'),
+				 		p()
 				 	),
 				 	conditionalPanel(
 				 		condition = "input.refOption == 'custom'",
@@ -41,27 +37,21 @@ fluidPage(
 				 	radioButtons('testOption', NULL,
 				 					 c('Example data (GSE32863)'='example',
 				 					   'Supply my own'='custom')),
-
 				 	conditionalPanel(
 				 		condition = "input.testOption != 'custom'",
-				 		downloadButton('testDownload', 'Download example test data')
-				 	),
-				 	conditionalPanel(
-				 		condition = "input.testOption != 'custom'",
-				 		br()
+				 		downloadButton('testDownload', 'Download example test data'),
+				 		p()
 				 	),
 				 	conditionalPanel(
 				 		condition = "input.testOption == 'custom'",
 				 		fileInput('testFile', 'CSV file:',
 				 					 accept=c('text/csv', 'text/comma-separated-values,text/plain', '.csv'))
 				 	),
-
-				 	uiOutput('testCorrDownloadInput'),
-				 	br(),
-				 	uiOutput('testConditionInput'),
-				 	uiOutput('testSigInput'),
-				 	uiOutput('testResultDownloadInput'),
-				 	br(),
+				 	span(textOutput('testFailText'), style='color:blue'),
+				 	uiOutput('testCorrDownloadUi'),
+				 	uiOutput('testConditionUi'),
+				 	uiOutput('testSigUi'),
+				 	uiOutput('testResultDownloadUi'),
 				 	sliderInput('testPlotWidth', 'Plot width (px)', min=400, max=600, value=440, step=20),
 				 	sliderInput('testPlotHeight', 'Plot height (px)', min=200, max=600, value=260, step=20)
 				 )

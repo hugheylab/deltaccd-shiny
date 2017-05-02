@@ -83,10 +83,23 @@ function(input, output) {
 		read_csv(testFilePath())
 	})
 
+	testFail = reactive({
+		length(setdiff(symbolLevels(), setdiff(colnames(tst()), c('sample', 'condition'))))>0
+	})
+
+	output$testFailText = renderText({
+		if (is.null(tst()) || !testFail()) {
+			return(NULL)}
+		missingSymbols = setdiff(symbolLevels(), setdiff(colnames(tst()), c('sample', 'condition')))
+		errStr = c('Cannot proceed with analysis, because the following genes are in the reference panel,',
+					  'but not in the test data: %s. Please revise the reference correlations or the test data.')
+		sprintf(paste(errStr, collapse=' '), paste(missingSymbols, collapse=', '))
+	})
+
 	output$testDownload = downloadHandler(testFileName(), function(file) write_csv(tst(), file))
 
 	testCorr = reactive({
-		if (is.null(tst()) || is.null(ref())) {
+		if (is.null(ref()) || is.null(tst()) || testFail()) {
 			return(NULL)}
 		tst() %>%
 			group_by(condition) %>%
@@ -98,10 +111,10 @@ function(input, output) {
 		function(file) write_csv(testCorr(), file)
 	)
 
-	output$testCorrDownloadInput = renderUI({
+	output$testCorrDownloadUi = renderUI({
 		if (is.null(testCorr())) {
 			return(NULL)}
-		downloadButton('testCorrDownload', 'Download test data correlations')
+		list(downloadButton('testCorrDownload', 'Download test data correlations'), p())
 	})
 
 	output$testHeatmap = renderPlot({
@@ -114,38 +127,36 @@ function(input, output) {
 	})
 
 	output$testHeatmapUi = renderUI({
-		if (is.null(testCorr())) {
-			return(NULL)}
 		plotOutput('testHeatmap', width=input$testPlotWidth, height=input$testPlotHeight)
 	})
 
-	output$testConditionInput = renderUI({
-		if (is.null(tst())) {
+	output$testConditionUi = renderUI({
+		if (is.null(testCorr())) {
 			return(NULL)}
-		radioButtons('testConditionInput', 'Condition corresponding to normal:',
+		radioButtons('testCondition', 'Condition corresponding to normal:',
 						 sort(unique(tst()$condition)))
 	})
 
-	output$testSigInput = renderUI({
+	output$testSigUi = renderUI({
 		if (is.null(testCorr())) {
 			return(NULL)}
-		checkboxInput('testSigInput', 'Calculate one-sided significance (1000 permutations)')
+		checkboxInput('testSig', 'Calculate p-value (takes several seconds)')
 	})
 
 	testResult = reactive({
-		if (is.null(input$testConditionInput)) {
+		if (is.null(input$testCondition)) {
 			return(NULL)}
-		calcRefDist(testCorr(), ref(), symbolLevels(), input$testConditionInput)
+		calcRefDist(testCorr(), ref(), symbolLevels(), input$testCondition)
 	})
 
 	testResultSig = reactive({
 		if (is.null(testCorr())) {
 			return(NULL)
-		} else if (is.null(input$testConditionInput) || !input$testSigInput) {
+		} else if (is.null(input$testCondition) || !input$testSig) {
 			return(testResult())}
 
-		testNormal = filter(tst(), condition==input$testConditionInput)
-		conditions = setdiff(tst()$condition, input$testConditionInput)
+		testNormal = filter(tst(), condition==input$testCondition)
+		conditions = setdiff(tst()$condition, input$testCondition)
 		nIter = 1000
 
 		testPerm = foreach(conditionNow=conditions, .combine=bind_rows) %do% {
@@ -155,13 +166,15 @@ function(input, output) {
 				makePerms(nIter) %>%
 				group_by(condition, add=TRUE) %>%
 				do(calcCorr(., symbolLevels())) %>%
-				calcRefDist(ref(), symbolLevels(), input$testConditionInput) %>%
-				filter(condition!=input$testConditionInput)}
+				calcRefDist(ref(), symbolLevels(), input$testCondition) %>%
+				filter(condition!=input$testCondition)}
 
 		calcPermPval(testResult(), testPerm)
 	})
 
 	output$testResultTable = renderTable({
+		if (is.null(testResultSig())) {
+			return(NULL)}
 		testResultSig()
 	})
 
@@ -170,9 +183,9 @@ function(input, output) {
 		function(file) write_csv(testResultSig(), file)
 	)
 
-	output$testResultDownloadInput = renderUI({
+	output$testResultDownloadUi = renderUI({
 		if (is.null(testResultSig())) {
 			return(NULL)}
-		downloadButton('testResultDownload', 'Download results table')
+		list(downloadButton('testResultDownload', 'Download results table'), p())
 	})
 }

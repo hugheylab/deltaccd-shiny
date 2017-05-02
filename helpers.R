@@ -1,6 +1,5 @@
 library('tidyverse')
 
-# set.seed(330033)
 set.seed(100)
 eb = element_blank()
 theme_set(theme_light() +
@@ -54,6 +53,7 @@ calcRefDist = function(df, ref, symbolLevels, conditionNormal) {
 		filter(as.numeric(symbol1Fac) < as.numeric(symbol2Fac)) %>%
 		summarize(CCD = calcDist(rho, rhoRef)) %>%
 		mutate(deltaCCD = CCD - CCD[condition==conditionNormal]) %>%
+		mutate(deltaCCD = ifelse(condition==conditionNormal, NA, deltaCCD)) %>%
 		arrange(condition)}
 
 
