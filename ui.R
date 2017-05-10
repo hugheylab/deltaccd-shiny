@@ -12,16 +12,10 @@ fluidPage(
 				 					   'Default for mouse'='mouse',
 				 					   'Supply my own'='custom')),
 				 	conditionalPanel(
-				 		condition = "input.refOption != 'custom'",
-				 		downloadButton('refDownload', 'Download reference correlations'),
-				 		p()
-				 	),
-				 	conditionalPanel(
 				 		condition = "input.refOption == 'custom'",
 				 		fileInput('refFile', 'CSV file:',
 				 					 accept=c('text/csv', 'text/comma-separated-values,text/plain', '.csv'))
 				 	),
-				 	uiOutput('refHeatmapDownloadUi'),
 				 	uiOutput('refPlotSliders')
 				 ),
 				 wellPanel(
@@ -37,11 +31,6 @@ fluidPage(
 				 					 c('Example data (GSE32863)'='example',
 				 					   'Supply my own'='custom')),
 				 	conditionalPanel(
-				 		condition = "input.testOption != 'custom'",
-				 		downloadButton('testDownload', 'Download example test data'),
-				 		p()
-				 	),
-				 	conditionalPanel(
 				 		condition = "input.testOption == 'custom'",
 				 		fileInput('testFile', 'CSV file:',
 				 					 accept=c('text/csv', 'text/comma-separated-values,text/plain', '.csv'))
@@ -49,10 +38,8 @@ fluidPage(
 				 	span(textOutput('testFailText'), style='color:blue'),
 				 	uiOutput('testConditionUi'),
 				 	uiOutput('testSigUi'),
-				 	uiOutput('testResultDownloadUi'),
-				 	uiOutput('testCorrDownloadUi'),
-				 	uiOutput('testHeatmapDownloadUi'),
-				 	uiOutput('testPlotSliders')
+				 	uiOutput('testPlotSliders'),
+				 	uiOutput('allResultsDownloadUi')
 				 )
 		),
 		column(6,

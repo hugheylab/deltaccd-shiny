@@ -47,11 +47,6 @@ function(input, output) {
 		return(refTmp)
 	})
 
-	output$refDownload = downloadHandler(
-		function() sprintf('%s_corr.csv', tools::file_path_sans_ext(refFileName())),
-		function(file) write_csv(refSquare(), file)
-	)
-
 	symbolLevels = reactive({
 		if (is.null(refSquare())) {
 			return(NULL)}
@@ -83,23 +78,11 @@ function(input, output) {
 		plotOutput('refHeatmap', width=input$refPlotWidth, height=input$refPlotHeight)
 	})
 
-	output$refHeatmapDownload = downloadHandler(
-		function() sprintf('%s_heatmap.pdf', tools::file_path_sans_ext(refFileName())),
-		function(file) ggsave(file, refHeatmap(),
-									 width=input$refPlotWidth / plotScale, height=input$refPlotHeight / plotScale)
-	)
-
-	output$refHeatmapDownloadUi = renderUI({
-		if (is.null(refHeatmap())) {
-			return(NULL)}
-		list(downloadButton('refHeatmapDownload', 'Download reference heatmap'), p())
-	})
-
 	output$refPlotSliders = renderUI({
 		if (is.null(ref())) {
 			return(NULL)}
-		list(sliderInput('refPlotWidth', 'Plot width (px)', min=200, max=400, value=280, step=20),
-			  sliderInput('refPlotHeight', 'Plot height (px)', min=200, max=400, value=240, step=20))
+		list(sliderInput('refPlotWidth', 'Plot width (px)', min=200, max=400, value=280, step=10),
+			  sliderInput('refPlotHeight', 'Plot height (px)', min=200, max=400, value=240, step=10))
 	})
 
 	#######################################################################
@@ -159,25 +142,12 @@ function(input, output) {
 		paste(errVec, collapse=' ')
 	})
 
-	output$testDownload = downloadHandler(testFileName(), function(file) write_csv(tst(), file))
-
 	testCorr = reactive({
 		if (is.null(ref()) || is.null(tst()) || any(testFail())) {
 			return(NULL)}
 		tst() %>%
 			group_by(condition) %>%
 			do(calcCorr(., symbolLevels()))
-	})
-
-	output$testCorrDownload = downloadHandler(
-		function() sprintf('%s_corr.csv', tools::file_path_sans_ext(testFileName())),
-		function(file) write_csv(testCorr(), file)
-	)
-
-	output$testCorrDownloadUi = renderUI({
-		if (is.null(testCorr())) {
-			return(NULL)}
-		list(downloadButton('testCorrDownload', 'Download test data correlations'), p())
 	})
 
 	testHeatmap = reactive({
@@ -197,18 +167,6 @@ function(input, output) {
 		plotOutput('testHeatmap', width=input$testPlotWidth, height=input$testPlotHeight)
 	})
 
-	output$testHeatmapDownload = downloadHandler(
-		function() sprintf('%s_heatmap.pdf', tools::file_path_sans_ext(testFileName())),
-		function(file) ggsave(file, testHeatmap(),
-									 width=input$testPlotWidth / plotScale, height=input$testPlotHeight / plotScale)
-	)
-
-	output$testHeatmapDownloadUi = renderUI({
-		if (is.null(testHeatmap())) {
-			return(NULL)}
-		list(downloadButton('testHeatmapDownload', 'Download test data heatmaps'), p())
-	})
-
 	output$testConditionUi = renderUI({
 		if (is.null(testCorr())) {
 			return(NULL)}
@@ -219,14 +177,14 @@ function(input, output) {
 	output$testSigUi = renderUI({
 		if (is.null(testCorr())) {
 			return(NULL)}
-		checkboxInput('testSig', 'Calculate p-value (takes several seconds)')
+		checkboxInput('testSig', 'Calculate p-value (takes a few seconds)')
 	})
 
 	output$testPlotSliders = renderUI({
 		if (is.null(testCorr())) {
 			return(NULL)}
-		list(sliderInput('testPlotWidth', 'Plot width (px)', min=400, max=600, value=460, step=20),
-			  sliderInput('testPlotHeight', 'Plot height (px)', min=200, max=600, value=260, step=20))
+		list(sliderInput('testPlotWidth', 'Plot width (px)', min=400, max=600, value=460, step=10),
+			  sliderInput('testPlotHeight', 'Plot height (px)', min=200, max=600, value=260, step=10))
 	})
 
 	testResult = reactive({
@@ -263,14 +221,54 @@ function(input, output) {
 		testResultSig()
 	}, digits=3)
 
-	output$testResultDownload = downloadHandler(
-		function() sprintf('%s_result.csv', tools::file_path_sans_ext(testFileName())),
-		function(file) write_csv(testResultSig(), file)
+	#######################################################################
+
+	output$allResultsDownload = downloadHandler(
+		'deltaCCD_results.zip',
+		function(file) {
+			tmpdir = tempdir()
+			fs = c()
+
+			if (!is.null(refSquare())) {
+				fp = file.path(tmpdir, sprintf('%s_corr.csv', tools::file_path_sans_ext(refFileName())))
+				fs = c(fs, fp)
+				write_csv(refSquare(), fp)}
+
+			if (!is.null(refHeatmap())) {
+				fp = file.path(tmpdir, sprintf('%s_heatmap.pdf', tools::file_path_sans_ext(refFileName())))
+				fs = c(fs, fp)
+				ggsave(fp, refHeatmap(), width=input$refPlotWidth / plotScale,
+						 height=input$refPlotHeight / plotScale)}
+
+			if (!is.null(tst())) {
+				fp = file.path(tmpdir, sprintf('%s_data.csv', tools::file_path_sans_ext(testFileName())))
+				fs = c(fs, fp)
+				write_csv(tst(), fp)}
+
+			if (!is.null(testCorr())) {
+				fp = file.path(tmpdir, sprintf('%s_corr.csv', tools::file_path_sans_ext(testFileName())))
+				fs = c(fs, fp)
+				write_csv(testCorr(), fp)}
+
+			if (!is.null(testHeatmap())) {
+				fp = file.path(tmpdir, sprintf('%s_heatmap.pdf', tools::file_path_sans_ext(testFileName())))
+				fs = c(fs, fp)
+				ggsave(fp, testHeatmap(), width=input$testPlotWidth / plotScale,
+						 height=input$testPlotHeight / plotScale)}
+
+			if (!is.null(testResultSig())) {
+				fp = file.path(tmpdir, sprintf('%s_result.csv', tools::file_path_sans_ext(testFileName())))
+				fs = c(fs, fp)
+				write_csv(testResultSig(), fp)}
+
+			zip(zipfile=file, files=fs, flags='-j9X')
+		},
+		contentType='application/zip'
 	)
 
-	output$testResultDownloadUi = renderUI({
-		if (is.null(testResultSig())) {
+	output$allResultsDownloadUi = renderUI({
+		if (is.null(refSquare()) && is.null(tst())) {
 			return(NULL)}
-		list(downloadButton('testResultDownload', 'Download test data results'), p())
+		list(downloadButton('allResultsDownload', 'Download results'))#, p())
 	})
 }
