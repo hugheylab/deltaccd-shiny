@@ -7,6 +7,7 @@ refFilePathMouse = 'reference_mouse.csv'
 testFileNameExample = 'GSE32863.csv'
 nIter = 1000
 seed = 100
+plotScale = 70
 
 # reference correlations
 	# correlation matrix, order of gene symbols based on first column
@@ -16,21 +17,40 @@ seed = 100
 	# then one row per sample, with expression values and the corresponding condition and sample name
 
 function(input, output) {
-	refSquare = reactive({
+	refFilePath = reactive({
 		if (input$refOption=='human') {
-			refFilePath = refFilePathHuman
+			refFilePathHuman
 		} else if (input$refOption=='mouse') {
-			refFilePath = refFilePathMouse
+			refFilePathMouse
 		} else if (input$refOption=='custom' && !is.null(input$refFile)) {
-			refFilePath = input$refFile$datapath
+			input$refFile$datapath
 		} else {
+			NULL}
+	})
+
+	refFileName = reactive({
+		if (input$refOption=='human') {
+			refFilePathHuman
+		} else if (input$refOption=='mouse') {
+			refFilePathMouse
+		} else if (input$refOption=='custom' && !is.null(input$refFile)) {
+			input$refFile$name
+		} else {
+			NULL}
+	})
+
+	refSquare = reactive({
+		if (is.null(refFilePath())) {
 			return(NULL)}
-		refTmp = read_csv(refFilePath, col_types=cols())
+		refTmp = read_csv(refFilePath(), col_types=cols())
 		colnames(refTmp)[1] = 'symbol1'
 		return(refTmp)
 	})
 
-	output$refDownload = downloadHandler('reference_corr.csv', function(file) write_csv(refSquare(), file))
+	output$refDownload = downloadHandler(
+		function() sprintf('%s_corr.csv', tools::file_path_sans_ext(refFileName())),
+		function(file) write_csv(refSquare(), file)
+	)
 
 	symbolLevels = reactive({
 		if (is.null(refSquare())) {
@@ -46,7 +66,7 @@ function(input, output) {
 			filter(symbol1!=symbol2)
 	})
 
-	output$refHeatmap = renderPlot({
+	refHeatmap = reactive({
 		if (is.null(ref())) {
 			return(NULL)}
 		ref1 = makeSymbolFac(ref(), symbolLevels(), reve=TRUE)
@@ -55,8 +75,24 @@ function(input, output) {
 			ggtitle('Reference')
 	})
 
+	output$refHeatmap = renderPlot({
+		refHeatmap()
+	})
+
 	output$refHeatmapUi = renderUI({
 		plotOutput('refHeatmap', width=input$refPlotWidth, height=input$refPlotHeight)
+	})
+
+	output$refHeatmapDownload = downloadHandler(
+		function() sprintf('%s_heatmap.pdf', tools::file_path_sans_ext(refFileName())),
+		function(file) ggsave(file, refHeatmap(),
+									 width=input$refPlotWidth / plotScale, height=input$refPlotHeight / plotScale)
+	)
+
+	output$refHeatmapDownloadUi = renderUI({
+		if (is.null(refHeatmap())) {
+			return(NULL)}
+		list(downloadButton('refHeatmapDownload', 'Download reference heatmap'), p())
 	})
 
 	output$refPlotSliders = renderUI({
@@ -144,7 +180,7 @@ function(input, output) {
 		list(downloadButton('testCorrDownload', 'Download test data correlations'), p())
 	})
 
-	output$testHeatmap = renderPlot({
+	testHeatmap = reactive({
 		if (is.null(testCorr())) {
 			return(NULL)}
 		testCorr1 = makeSymbolFac(testCorr(), symbolLevels(), reve=TRUE)
@@ -153,8 +189,24 @@ function(input, output) {
 			ggtitle(tools::file_path_sans_ext(testFileName()))
 	})
 
+	output$testHeatmap = renderPlot({
+		testHeatmap()
+	})
+
 	output$testHeatmapUi = renderUI({
 		plotOutput('testHeatmap', width=input$testPlotWidth, height=input$testPlotHeight)
+	})
+
+	output$testHeatmapDownload = downloadHandler(
+		function() sprintf('%s_heatmap.pdf', tools::file_path_sans_ext(testFileName())),
+		function(file) ggsave(file, testHeatmap(),
+									 width=input$testPlotWidth / plotScale, height=input$testPlotHeight / plotScale)
+	)
+
+	output$testHeatmapDownloadUi = renderUI({
+		if (is.null(testHeatmap())) {
+			return(NULL)}
+		list(downloadButton('testHeatmapDownload', 'Download test data heatmaps'), p())
 	})
 
 	output$testConditionUi = renderUI({
@@ -219,6 +271,6 @@ function(input, output) {
 	output$testResultDownloadUi = renderUI({
 		if (is.null(testResultSig())) {
 			return(NULL)}
-		list(downloadButton('testResultDownload', 'Download results table'), p())
+		list(downloadButton('testResultDownload', 'Download test data results'), p())
 	})
 }

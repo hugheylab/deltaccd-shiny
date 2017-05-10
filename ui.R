@@ -21,6 +21,7 @@ fluidPage(
 				 		fileInput('refFile', 'CSV file:',
 				 					 accept=c('text/csv', 'text/comma-separated-values,text/plain', '.csv'))
 				 	),
+				 	uiOutput('refHeatmapDownloadUi'),
 				 	uiOutput('refPlotSliders')
 				 ),
 				 wellPanel(
@@ -46,10 +47,11 @@ fluidPage(
 				 					 accept=c('text/csv', 'text/comma-separated-values,text/plain', '.csv'))
 				 	),
 				 	span(textOutput('testFailText'), style='color:blue'),
-				 	uiOutput('testCorrDownloadUi'),
 				 	uiOutput('testConditionUi'),
 				 	uiOutput('testSigUi'),
 				 	uiOutput('testResultDownloadUi'),
+				 	uiOutput('testCorrDownloadUi'),
+				 	uiOutput('testHeatmapDownloadUi'),
 				 	uiOutput('testPlotSliders')
 				 )
 		),
