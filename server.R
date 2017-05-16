@@ -65,7 +65,7 @@ function(input, output) {
 		if (is.null(ref())) {
 			return(NULL)}
 		ref1 = makeSymbolFac(ref(), symbolLevels(), reve=TRUE)
-		makeHeatmap(ggplot(ref1), gc=getLowHigh(ref1$rho), text=element_text(size=13),
+		makeHeatmap(ggplot(ref1), gc=getColorsHeat(ref1$rho), text=element_text(size=13),
 						axis.text.x=element_text(angle=90, vjust=0.5, hjust=1)) +
 			ggtitle('Reference')
 	})
@@ -154,7 +154,7 @@ function(input, output) {
 		if (is.null(testCorr())) {
 			return(NULL)}
 		testCorr1 = makeSymbolFac(testCorr(), symbolLevels(), reve=TRUE)
-		makeHeatmap(ggplot(testCorr1) + facet_wrap(~condition, ncol=3), gc=getLowHigh(testCorr1$rho),
+		makeHeatmap(ggplot(testCorr1) + facet_wrap(~condition, ncol=3), gc=getColorsHeat(testCorr1$rho),
 						text=element_text(size=13), axis.text.x=element_text(angle=90, vjust=0.5, hjust=1)) +
 			ggtitle(tools::file_path_sans_ext(testFileName()))
 	})

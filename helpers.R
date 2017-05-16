@@ -23,7 +23,7 @@ makeSymbolFac = function(df, levs, reve=FALSE) {
 calcDist = function(r1, r2) sqrt(sum((r1-r2)^2, na.rm=TRUE))
 
 
-getLowHigh = function(vals, vLow=-1, vMid=0, vHigh=1, cLow='#e66101', cMid='#f7f7f7', cHigh='#5e3c99') {
+getColorsHeat = function(vals, vLow=-1, vMid=0, vHigh=1, cLow='#e66101', cMid='#f7f7f7', cHigh='#5e3c99') {
 	valRange = seq(0, 1, length.out=101)
 	colorScale = scales::div_gradient_pal(low=cLow, mid=cMid, high=cHigh)(valRange)
 
