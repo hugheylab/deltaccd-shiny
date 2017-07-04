@@ -1,4 +1,8 @@
 library('tidyverse')
+library('statmod')
+
+nIter = 1000
+seed = 100
 
 theme_set(theme_light() +
 			 	theme(axis.text=element_text(color='black'), strip.text=element_text(color='black'),
@@ -66,9 +70,13 @@ makePerms = function(df, nIter, seed) {
 		mutate(condition = sample(condition, length(condition)))}
 
 
-calcPermPval = function(obs, perm) {
+calcPermPval = function(obs, perm, comb) {
 	jn = perm %>%
 		inner_join(obs, by='condition') %>%
 		group_by(condition) %>%
-		summarize(`p-value` = sum(deltaCCD.x >= deltaCCD.y) / n())
+		summarize(nExtr = sum(deltaCCD.x >= deltaCCD.y)) %>%
+		inner_join(comb, by='condition') %>%
+		group_by(condition) %>%
+		summarize(`p-value` = permp(nExtr, nperm=nIter, total.nperm=nComb,
+											 twosided=FALSE, method='approximate'))
 	left_join(obs, jn, by='condition')}

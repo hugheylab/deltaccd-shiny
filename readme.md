@@ -8,4 +8,4 @@ In the heatmaps, "rho" refers to the Spearman correlation between the expression
 
 In the results table, CCD (clock correlation distance) corresponds to the Euclidean distance between the reference correlations and the respective condition in the test data. deltaCCD corresponds to the difference between the CCD for the condition corresponding to normal and the CCD for the respective condition. A positive deltaCCD indicates that clock gene co-expression is more similar to the reference in the normal condition than in the non-normal condition, and thus that the circadian clock in the non-normal condition may be perturbed or dysfunctional.
 
-The p-value is one-sided and is calculated as the fraction of the 1000 permutations in which the deltaCCD is greater than or equal to the observed deltaCCD. The deltaCCD and p-value for the normal condition are set to NA.
+The p-value is one-sided and is calculated based on 1000 permutations, followed by correction using the method of Phipson and Smyth (2010). The deltaCCD and p-value for the normal condition are set to NA.

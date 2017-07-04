@@ -5,8 +5,6 @@ source('helpers.R')
 refFilePathHuman = 'reference_human.csv'
 refFilePathMouse = 'reference_mouse.csv'
 testFileNameExample = 'GSE32863.csv'
-nIter = 1000
-seed = 100
 plotScale = 70
 
 # reference correlations
@@ -203,7 +201,7 @@ function(input, output) {
 		conditions = setdiff(tst()$condition, input$testCondition)
 
 		testPerm = foreach(conditionNow=conditions, .combine=bind_rows) %do% {
-			testNow = tst() %>%
+			tst() %>%
 				filter(condition==conditionNow) %>%
 				bind_rows(testNormal) %>%
 				makePerms(nIter, seed) %>%
@@ -212,7 +210,11 @@ function(input, output) {
 				calcRefDist(ref(), symbolLevels(), input$testCondition) %>%
 				filter(condition!=input$testCondition)}
 
-		calcPermPval(testResult(), testPerm)
+		testComb = tst() %>%
+			count(condition) %>%
+			mutate(nComb = choose(n + n[condition==input$testCondition], n))
+
+		calcPermPval(testResult(), testPerm, testComb)
 	})
 
 	output$testResultTable = renderTable({
