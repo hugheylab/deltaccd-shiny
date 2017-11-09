@@ -1,4 +1,4 @@
-This app can be used to infer the function of the mammalian circadian clock based on the co-expression of clock genes. It can be applied to datasets in which the samples are not labeled with time of day and were not acquired throughout the 24-h cycle.
+This app can be used to infer the function of the mammalian circadian clock based on the co-expression of clock genes. It can be applied to datasets in which the samples are not labeled with time of day and were not acquired throughout the 24-h cycle. For a fully featured application, please use the available [R package](https://github.com/hugheylab/deltaccd).
 
 The default reference correlations for both humans and mice are based on circadian gene expression from multiple mouse organs. To see how to format your own reference correlations, please download the default correlations for either mouse or human.
 
