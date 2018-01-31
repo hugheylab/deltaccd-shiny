@@ -20,7 +20,7 @@ fluidPage(
 				 ),
 				 wellPanel(
 				 	p('For details of the method and our results, please check out the ',
-				 	  a('preprint.', href='https://doi.org/10.1101/130765')),
+				 	  a('paper.', href='https://doi.org/10.7717/peerj.4327')),
 				 	p('If you have questions or issues, please email me at jakejhughey#gmail.com.')
 				 )
 		),
